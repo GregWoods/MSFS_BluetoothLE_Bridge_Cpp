@@ -1,31 +1,70 @@
-# Description
+# MSFS Bluetooth LE Bridge
 
-The Simionic G1000 hardware bezels are designed to run in one of 2 configurations
+Bridges Simionic G1000 hardware bezels to Microsoft Flight Simulator via Bluetooth LE, enabling direct button and encoder input without an iPad or extra screens. Ideal for VR setups.
 
-* With an iPad inserted into each G1000 bezel. The bezel sends button presses and rotary encoder inputs to the iPad via Bluetooth LE. The iPad has it's own G1000 software which reacts immediately to the input, and then the results are also sent to Microsoft Flight Simulator. If you are in VR and can only see the "in-sim" G1000 panels, there is enough of a delay for it to be a very unpleasant user experience.
-* With a Simionic supplied LCD screen panel and USB serial convertor. The in-sim G1000 panels are popped out and dragged into these screens which act second and third monitors. This requires extra expense which is not required for use in VR
+## Quick Start
 
-I wanted a third option, which is more suited to a VR setup:
+### Prerequisites
 
-* Replace the screen with some non-functioning blanking panel (probably perspex or similar). The G1000 units use bluetooth to send button and encoder inputs directly to an app running on the MSFS PC. This app reads those values and maps them to relevant SimConnect events (likely HVars) and updates the values in the simulator. 
+- **Visual Studio 2022** with "Desktop development with C++" workload (includes CMake and Ninja)
+- **MSFS SDK** - In MSFS, enable Developer Mode, and download the SDK. Install to default location (`C:/MSFS 2024 SDK`)
+- **Bluetooth adapter** on your PC
 
-# Build and Run
+### Clone and Build
 
-## Create the Build Environments
+```
+# Clone with submodules
+git clone --recurse-submodules https://github.com/YOUR_USERNAME/MSFS_BluetoothLE_Bridge_Cpp.git
+cd MSFS_BluetoothLE_Bridge_Cpp
 
-If CmakeLists.txt or cache variables change, re-run the following from the "x64 Native Tools Command Prompt for Visual Studio 2022":
+# If you already cloned without submodules:
+git submodule update --init --recursive
+```
 
-```cmake --preset debug ``` or ```cmake --preset release```
+Open "x64 Native Tools Command Prompt for VS 2022" and run:
 
-## Build the Project
+```
+# Configure
+cmake --preset debug
 
-```cmake --build --preset debug``` or ```cmake --build --preset release```
+# Build
+cmake --build --preset debug
+```
 
-Note: if the app fails to find the bluetooth adapter (and you definitely have one), use dumpbin to confirm that you have built a 64 bit version.
+### Run
 
-```dumpbin /headers build\debug\msfs_ble_g1000.exe | findstr /C:"machine"```
+```
+# Main bridge application (requires MSFS running)
+build\debug\msfs_ble_bridge.exe
 
+# BLE scanner utility - discover nearby Bluetooth LE devices
+build\debug\ble_scanner.exe
+```
 
-## Debugging in VS2022
+Use `ble_scanner` first to verify your Bluetooth adapter works and to find your G1000 bezel's device info.
 
- Tools > Options > CMake check “Use CMake when both CMakeLists.txt and solution are present”
+## Troubleshooting
+
+**Bluetooth adapter not found?** Verify you built 64-bit:
+```
+dumpbin /headers build\debug\msfs_ble_bridge.exe | findstr /C:"machine"
+```
+
+**CMake can't find SimConnect?** Ensure the SDK is installed at `C:/MSFS 2024 SDK`. If installed elsewhere, update `SIMCONNECT_SDK_ROOT` in `CMakePresets.json`.
+
+## Development in VS2022
+
+1. Open the folder in VS2022 (File > Open > Folder)
+2. VS will auto-detect CMakePresets.json
+3. Select "debug" or "release" preset from the configuration dropdown
+4. Build with Ctrl+Shift+B, debug with F5
+
+If CMake doesn't activate: Tools > Options > CMake > check "Use CMake when both CMakeLists.txt and solution are present"
+
+## Background
+
+The Simionic G1000 bezels normally work in two modes:
+- **iPad mode**: Bezel sends inputs to iPad via BLE, iPad displays G1000 and relays to MSFS. VR users experience noticeable latency.
+- **LCD mode**: Dedicated screens with USB serial. Extra hardware cost.
+
+This project enables a third option: the bezels send BLE inputs directly to this bridge app, which updates MSFS via SimConnect/HVars with minimal latency.
