@@ -1,2 +1,4 @@
 /.vs
 /build
+FSUIPC_WASMIF.log
+.claude/settings.local.json
